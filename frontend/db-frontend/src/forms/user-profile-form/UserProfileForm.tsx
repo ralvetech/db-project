@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import LoadingButton from '@/components/LoadingButton';
 import { Button } from '@/components/ui/button';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
     email: z.string().optional(),
@@ -18,16 +19,23 @@ const formSchema = z.object({
 export type UserFormData = z.infer<typeof formSchema>;
 
 type Props = {
+    currentUser?: UserFormData
     onSave: (userProfileData: UserFormData) => void;
+    onDelete: () => void;
     isPending: boolean;
+    isDeleting: boolean;
+
 };
 
-const UserProfileForm =  ({onSave, isPending}: Props) => {
+const UserProfileForm =  ({onSave, isPending, onDelete, isDeleting, currentUser}: Props) => {
     const { user } = useAuth0();
-    const { register, handleSubmit, formState: { errors } } = useForm<UserFormData>({
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormData>({
         resolver: zodResolver(formSchema),
-        defaultValues: user?.email ? { email: user.email } : undefined,
+        defaultValues: currentUser ?? { email: user?.email },
     });
+    useEffect(() => {
+        if (currentUser) reset(currentUser)
+        }, [currentUser, reset])
 
     return(
             <form onSubmit={handleSubmit(onSave)} className='space-y-4 bg-gray-50 rounder-lg md:p-10'>
@@ -37,7 +45,7 @@ const UserProfileForm =  ({onSave, isPending}: Props) => {
                 </div>
                 <div className="space-y-2 flex-1">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" {...register("email")} className="bg-white" />
+                    <Input id="email" {...register("email")} className="bg-white" disabled/>
                 </div>
                 <div className="space-y-2 flex-1">
                     <Label htmlFor="username">Username</Label>
@@ -56,7 +64,26 @@ const UserProfileForm =  ({onSave, isPending}: Props) => {
                     {errors.city && <p className="text-red-500">{errors.city.message}</p>}
                 </div>
 
-                {isPending ? <LoadingButton /> : <Button type="submit" className='bg-yellow-500'>Save Changes</Button>}
+                <div className="flex gap-3">
+                    {isPending ? (
+                        <LoadingButton />
+                    ) : (
+                        <Button type="submit" className="bg-yellow-500">
+                            Save Changes
+                        </Button>
+                    )}
+                    {isDeleting ? (
+                        <LoadingButton />
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={onDelete}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                            Delete Profile
+                        </Button>
+                        )}
+                    </div>
             </form>
     )
 };

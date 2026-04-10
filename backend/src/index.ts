@@ -4,6 +4,7 @@ import cors from "cors";
 import "dotenv/config";
 import pool from '../db.ts';
 import MyUserRoute from './routes/MyUserRoutes.ts';
+import StationRoute from "./routes/StationRoute.ts";
 
 
 const app = express();
@@ -46,6 +47,7 @@ router.get("/users", async (req: Request, res: Response) => {
 });
 
 app.use("/api/my/user", MyUserRoute)
+app.use('/api/stations', StationRoute)
 
 app.use("/api", router);
 app.listen(7000, () => {

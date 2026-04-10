@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { getUserByAuth0Id, upsertUser, deleteUser, createUser, updateUser } from '../models/user.ts'
+import { getUserByAuth0Id, deleteUser, createUser, updateUser } from '../models/user.ts'
 
 export async function getCurrentUser(req: Request, res: Response) {
   try {
@@ -49,7 +49,7 @@ export async function updateCurrentUser(req: Request, res: Response) {
   }
 }
 
-export async function removeUser(req: Request, res: Response) {
+export async function deleteCurrentUser(req: Request, res: Response) {
   try {
     const { auth0_id } = req.body as { auth0_id: string }
     if (!auth0_id) return res.status(401).json({ error: 'Unauthorized' })
@@ -66,4 +66,5 @@ export default {
   getCurrentUser,
   createCurrentUser,
   updateCurrentUser,
+  deleteCurrentUser
 };

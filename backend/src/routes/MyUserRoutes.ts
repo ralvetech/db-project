@@ -9,6 +9,6 @@ const router = express.Router()
 router.post("/", MyUserController.createCurrentUser)
 router.put("/",validateMyUserRequest, MyUserController.updateCurrentUser)
 router.get("/", MyUserController.getCurrentUser)
-//router.delete("/", MyUserController.deleteCurrentUser)
+router.delete("/", MyUserController.deleteCurrentUser)
 
 export default router
