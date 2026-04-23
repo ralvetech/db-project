@@ -36,4 +36,12 @@ export async function upsertStationStatus(
        updated_at = CURRENT_TIMESTAMP`,
     [place_id, name, lat, lng, has_fuel, auth0_id, email]
   )
+    await pool.query(
+    `
+    INSERT INTO station_status_history
+      (place_id, name, lat, lng, has_fuel, updated_by_auth0_id, updated_by_email)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    [place_id, name, lat, lng, has_fuel, auth0_id, email]
+  )
 }

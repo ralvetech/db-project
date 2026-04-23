@@ -3,7 +3,7 @@ import { getUserByAuth0Id, deleteUser, createUser, updateUser } from '../models/
 
 export async function getCurrentUser(req: Request, res: Response) {
   try {
-    const auth0_id = req.body.auth0_id
+    const auth0_id = req.query.auth0_id as string;
     if (!auth0_id) return res.status(401).json({ error: 'Unauthorized' })
 
     const user = await getUserByAuth0Id(auth0_id)
@@ -34,12 +34,12 @@ export async function createCurrentUser(req: Request, res: Response) {
 
 export async function updateCurrentUser(req: Request, res: Response) {
   try {
-    const { auth0_id, email, username, district, city } = req.body as { auth0_id: string; email: string, username: string, district: string, city: string }
+    const { auth0_id, email, username, district, city } = req.body as { auth0_id: string; email?: string, username: string, district: string, city: string }
 
     const existingUser = await getUserByAuth0Id(auth0_id)
     if (!existingUser) return res.status(404).json({ error: 'User not found' })
 
-    await updateUser(auth0_id, email, username, district, city )
+    await updateUser(auth0_id, email?? existingUser.email, username, district, city )
 
     const updatedUser = await getUserByAuth0Id(auth0_id);
     res.json({ success: true })

@@ -59,3 +59,30 @@ export const useUpdateStationStatus = () => {
 
   return { updateStatus, isPending }
 }
+
+export const useRecordSearch = () => {
+  const { user } = useAuth0()
+
+  const { mutateAsync: recordSearch } = useMutation({
+    mutationFn: async (data: {
+      place_id: string
+      station_name: string
+      lat: number
+      lng: number
+    }) => {
+      if (!user?.sub || !user?.email) return
+      const res = await fetch(`${API_BASE_URL}/api/search-history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth0_id: user.sub,
+          email: user.email,
+          ...data,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to record search')
+    },
+  })
+
+  return { recordSearch }
+}

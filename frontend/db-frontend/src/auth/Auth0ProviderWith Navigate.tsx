@@ -1,5 +1,6 @@
 import { useCreateMyUser } from "@/api/MyUserApi";
 import { Auth0Provider, User, type AppState } from "@auth0/auth0-react";
+import CreateUserAfterLogin from "./CreateUserAfterLogin";
 
 type Props = {
     children: React.ReactNode;
@@ -22,7 +23,8 @@ const Auth0ProviderWithNavigate = ({ children }: Props) => {
 };
     return(
         <Auth0Provider domain={domain} clientId={clientId} authorizationParams={ {redirect_uri: redirectUri}}
-        onRedirectCallback={onRedirectCallabck}>
+        onRedirectCallback={onRedirectCallabck} cacheLocation="localstorage">
+            <CreateUserAfterLogin />
             {children} 
         </Auth0Provider>
     )

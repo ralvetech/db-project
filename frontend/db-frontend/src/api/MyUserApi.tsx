@@ -1,6 +1,6 @@
 import type { UserFormData } from "@/forms/user-profile-form/UserProfileForm";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 
@@ -13,6 +13,20 @@ type CreateUserRequest = {
 
 export const useCreateMyUser = () => {
     const createMyUserRequest = async (user: CreateUserRequest) => {
+    const checkResponse = await fetch(
+      `${API_BASE_URL}/api/my/user?auth0_id=${user.auth0_id}`
+    );
+
+    if (checkResponse.ok) {
+      // User exists → do nothing
+      console.log("User already exists, skipping creation");
+      return;
+    }
+
+    if (checkResponse.status !== 404) {
+      // Some real error
+      throw new Error("Failed to check existing user");
+    }
         console.log("sending user data", user);
         const response = await fetch(`${API_BASE_URL}/api/my/user`, {
             method: "POST",
@@ -38,31 +52,53 @@ type UpdateMyUserRequest = {
 };
 
 export const useUpdateMyUser = () => {
-    const updateMyUserRequest = async (FormData: UpdateMyUserRequest) => {
-        const response = await fetch(`${API_BASE_URL}/api/my/user`, {
-            method: "PUT",
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(FormData),
-        }); 
+  const queryClient = useQueryClient();
+  const { user } = useAuth0();
 
-        if(!response.ok){
-            throw new Error("Failed to update user");
-        }
+  const updateMyUserRequest = async (formData: UpdateMyUserRequest) => {
+    const response = await fetch(`${API_BASE_URL}/api/my/user`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auth0_id: user?.sub,
+        ...formData,
+      }),
+    });
 
-        return response.json();
-};
-        const { mutateAsync: updateCurrentUser, isPending, isError, isSuccess, reset} = useMutation({ mutationFn: updateMyUserRequest });
-    if(isSuccess){
-        toast.success("User profile updated successfully");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update user: ${response.status} ${errorText}`);
     }
-    
-    if(isError){
-        toast.error(isError.toString())
-        reset()
-    }
-    return { updateCurrentUser, isPending, isError, isSuccess };
+
+    return response.json();
+  };
+
+  const {
+    mutateAsync: updateCurrentUser,
+    isPending,
+    isError,
+    isSuccess,
+    error,
+  } = useMutation({
+    mutationFn: updateMyUserRequest,
+    onSuccess: () => {
+      toast.success("User profile updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["fetchCurrentUser", user?.sub] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update user");
+    },
+  });
+
+  return {
+    updateCurrentUser,
+    isPending,
+    isError,
+    isSuccess,
+    error,
+  };
 };
 
 export const useDeleteMyUser = () => {
@@ -113,6 +149,7 @@ export const useGetMyUser = () => {
       },
 
     })
+
     if (!response.ok) {
       throw new Error("Failed to get user")
     }
